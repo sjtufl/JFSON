@@ -45,7 +45,7 @@ public:
     Json(object &&value);           // OBJECT
 
     //implicit constructor: anything with a to_string() function.
-    templatef <class T, class = decltype(&T::to_json)>
+    template <class T, class = decltype(&T::to_json)>
     Json(const T &t) : Json(t.to_json()) {}
 
     //implicit constructor: map-like objects (std::map, std::unordered_map, etc.)
