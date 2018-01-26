@@ -1,5 +1,5 @@
 #include <iostream>
-#include <assert.h>
+#include <cassert>
 #include "JFSON.h"
 
 #define JFSON_TEST_ASSERT(b) assert(b)

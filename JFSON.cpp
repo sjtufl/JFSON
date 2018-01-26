@@ -216,7 +216,7 @@ struct Statics {
     const string empty_string;
     const vector<Json> empty_vector;
     const map<string, Json> empty_map;
-    Statics() {}
+    Statics() = default;
 };
 
 static const Statics & statics() {
@@ -727,7 +727,7 @@ Json Json::parse(const string &in, string &err, JsonParse strategy) {
     return result;
 }
 
-// Documented in json11.hpp
+// Parse multiple objects, concatenated or separated by whitespace
 vector<Json> Json::parse_multi(const string &in,
                                std::string::size_type &parser_stop_pos,
                                string &err,
