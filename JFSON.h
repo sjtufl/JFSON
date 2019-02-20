@@ -168,10 +168,10 @@ protected:
     virtual bool bool_value() const;
     virtual const std::string &string_value() const;
     virtual const Json::array &array_items() const;
-    virtual const Json &operator[](size_t i) const;
+    virtual const Json& operator[](size_t i) const;
     virtual const Json::object &object_items() const;
-    virtual const Json &operator[](const std::string &key) const;
-    virtual ~JsonValue() {}
+    virtual const Json& operator[](const std::string &key) const;
+    virtual ~JsonValue() = default;
 };
 
 } // namespace JFSON
