@@ -3,3 +3,7 @@
 //
 
 #include "JsonReader.h"
+
+using namespace jfson;
+
+
