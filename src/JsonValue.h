@@ -213,6 +213,9 @@ public:
 
     JsonValue& addMember(JsonValue&& key, JsonValue&& value);
 
+    template <typename Handler>
+    bool writeTo(Handler& handler) const;
+
 private:
     ValueType type_;
 
@@ -232,6 +235,62 @@ private:
     };
 
 };
+
+#define CALL(expr) do { if (!(expr)) return false; } while(false)
+
+template <typename Handler>
+inline bool JsonValue::writeTo(Handler& handler) const
+{
+    switch (type_)
+    {
+        case JSON_NULL:
+            CALL(handler.Null());
+            break;
+        case JSON_BOOL:
+            CALL(handler.Bool(bo_));
+            break;
+        case JSON_INT32:
+            CALL(handler.Int32(int32_));
+            break;
+        case JSON_INT64:
+            CALL(handler.Int64(int64_));
+            break;
+        case JSON_DOUBLE:
+            CALL(handler.Double(doub_));
+            break;
+        case JSON_STRING:
+            CALL(handler.String(str_));
+            break;
+        case JSON_ARRAY:
+            CALL(handler.StartArray());
+            for (auto& val: getArray()) {
+                CALL(val.writeTo(handler));
+            }
+            CALL(handler.EndArray());
+            break;
+        case JSON_OBJECT:
+            // fixme : use struct member
+            CALL(handler.StartObject());
+            for(auto& member : getObject()) {
+                handler.Key(member.first);
+                CALL(member.second.writeTo(handler));
+            }
+            CALL(handler.EndObject());
+//            CALL(handler.StartObject());
+//            for (auto& member: getObject()) {
+//                handler.Key(member.key.getStringView());
+//                CALL(member.value.writeTo(handler));
+//            }
+//            CALL(handler.EndObject());
+            break;
+        default:
+            assert(false && "bad type");
+    }
+    return true;
+}
+
+#undef CALL
+
 
 
 }

@@ -29,10 +29,10 @@ unsigned itoa(int64_t val, char* buf);
 }
 
 template<typename WriteStream>
-class JsonWriter : noncopyable {
-
+class JsonWriter : noncopyable
+{
 public:
-    explicit JsonWriter(WriteStream &os) :
+    explicit JsonWriter(WriteStream& os) :
             os_(os), seeValue_(false) {}
 
     bool Null() {
@@ -210,7 +210,7 @@ private:
 
 private:
     std::vector<Level> stack_;
-    WriteStream os_;
+    WriteStream& os_;
     bool seeValue_;
 
 };

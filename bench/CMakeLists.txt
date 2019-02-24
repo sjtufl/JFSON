@@ -1,0 +1,2 @@
+add_executable(benchmark_parse benchmark_parse.cc)
+target_link_libraries(benchmark_parse jfson)
