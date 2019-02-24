@@ -12,6 +12,9 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <atomic>
+
+#include <src/noncopyable.h>
 
 namespace jfson
 {
@@ -201,9 +204,19 @@ public:
         return arr_[i];
     }
 
+    template <typename V>
+    JsonValue& addMember(const char* key, V&& value)
+    {
+        return addMember(JsonValue(key),
+                         Value(std::forward<V>(value)));
+    };
+
+    JsonValue& addMember(JsonValue&& key, JsonValue&& value);
+
 private:
     ValueType type_;
 
+//    typedef std::vector<char> String;
     typedef std::vector<JsonValue> Array;
     // Fixme: Replace map with struct Member
     typedef std::map<std::string_view, JsonValue> Object;

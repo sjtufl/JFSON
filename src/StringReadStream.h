@@ -1,7 +1,5 @@
-
-
-#ifndef TJSON_STRINGREADSTREAM_H
-#define TJSON_STRINGREADSTREAM_H
+#ifndef JFSON_STRINGREADSTREAM_H
+#define JFSON_STRINGREADSTREAM_H
 
 #include <string>
 #include <cassert>
@@ -60,4 +58,4 @@ private:
 
 
 }
-#endif //TJSON_STRINGREADSTREAM_H
+#endif //JFSON_STRINGREADSTREAM_H
