@@ -15,11 +15,9 @@ using namespace jfson;
 int main()
 {
 
-    /*
     Document document;
     ParseError err;
     err = document.parse(sample[0]);
-//    err = document.parse(json_test);
     if (err != PARSE_OK) {
         puts(parseErrorStr(err));
         return 1;
@@ -28,9 +26,9 @@ int main()
     FileWriteStream os(stdout);
     JsonWriter writer(os);
     document.writeTo(writer);
-     */
-    Document document;
-    ParseError err = document.parse(R"(
+
+    Document docagain;
+    ParseError err_docagain = docagain.parse(R"(
 {
     "precision": "zip",
     "Latitude": 37.766800000000003,
@@ -45,20 +43,22 @@ int main()
 }
 )");
 
-    if (err != PARSE_OK) {
+    if (err_docagain != PARSE_OK) {
         puts(parseErrorStr(err));
         exit(1);
     }
 
 
-    JsonValue& state = document["State"];
-    std::cout << "State: " << state.getStringView() << '\n';
+    JsonValue& state = docagain["State"];
+    std::cout << "\nState: " << state.getStringView() << '\n';
 
-    JsonValue& zip = document["Zip"];
+    JsonValue& zip = docagain["Zip"];
     std::cout << "Zip: " << zip.getStringView() << "\n";
 
     zip.setInt32(9527);
     std::cout << "Zip: " << zip.getInt32() << "\n";
 
-    document.addMember("123", "456");
+    docagain.addMember("123", "456");
+    JsonValue& test = docagain["Address"];
+    std::cout << "test: addMember: " << test.getStringView() << std::endl;
 }
