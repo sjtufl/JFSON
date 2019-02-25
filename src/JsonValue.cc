@@ -2,6 +2,7 @@
 // Created by fl on 10/2/18.
 //
 
+#include <algorithm>
 #include "JsonValue.h"
 
 using namespace jfson;
@@ -16,10 +17,13 @@ JsonValue::JsonValue(const jfson::JsonValue& rhs)
         case JSON_INT32:
         case JSON_INT64:
         case JSON_DOUBLE: break;
-        case JSON_STRING: break;
-        case JSON_ARRAY: break;
-        case JSON_OBJECT: break;
-        default: assert(false);
+        case JSON_STRING:
+            str_->incrAndGet(); break;
+        case JSON_ARRAY:
+            arr_->incrAndGet(); break;
+        case JSON_OBJECT:
+            obj_->incrAndGet(); break;
+        default: assert(false && "Bad value type");
     }
 }
 
@@ -27,7 +31,7 @@ JsonValue::JsonValue(JsonValue&& rhs)
             : type_(rhs.type_), arr_(rhs.arr_)
 {
     rhs.type_ = JSON_NULL;
-    rhs.arr_.clear();
+    rhs.arr_ = nullptr;
 }
 
 JsonValue& JsonValue::operator=(const jfson::JsonValue& rhs)
@@ -42,10 +46,13 @@ JsonValue& JsonValue::operator=(const jfson::JsonValue& rhs)
         case JSON_INT32:
         case JSON_INT64:
         case JSON_DOUBLE: break;
-        case JSON_STRING: break;
-        case JSON_ARRAY: break;
-        case JSON_OBJECT: break;
-        default: assert(false);
+        case JSON_STRING:
+            str_->incrAndGet(); break;
+        case JSON_ARRAY:
+            arr_->incrAndGet(); break;
+        case JSON_OBJECT:
+            obj_->incrAndGet(); break;
+        default: assert(false && "Bad value type");
     }
     return *this;
 }
@@ -56,7 +63,7 @@ JsonValue& JsonValue::operator=(JsonValue &&rhs) {
     type_ = rhs.type_;
     arr_ = rhs.arr_;
     rhs.type_ = JSON_NULL;
-    rhs.arr_.clear();
+    rhs.arr_ = nullptr;
     return *this;
 }
 
@@ -70,10 +77,10 @@ JsonValue::JsonValue(ValueType type)
         case JSON_BOOL:
         case JSON_INT32:
         case JSON_INT64:
-        case JSON_DOUBLE:                                break;
-        case JSON_STRING:                                break;
-        case JSON_ARRAY:                                 break;
-        case JSON_OBJECT:                                break;
+        case JSON_DOUBLE:                                   break;
+        case JSON_STRING: str_ = new StringWithRefCount();  break;
+        case JSON_ARRAY:  arr_ = new ArrayWithRefCount();   break;
+        case JSON_OBJECT: obj_ = new ObjectWithRefCount();  break;
         default: assert(false && "bad value type");
     }
 }
@@ -88,12 +95,18 @@ JsonValue::~JsonValue()
         case JSON_INT64:
         case JSON_DOUBLE: break;
         case JSON_STRING:
+            if (str_->decrAndGet() == 0)
+                delete str_;
             break;
         case JSON_ARRAY:
+            if (arr_->decrAndGet() == 0)
+                delete arr_;
             break;
         case JSON_OBJECT:
+            if (obj_->decrAndGet() == 0)
+                delete obj_;
             break;
-        default: assert(false && "bad value type");
+        default: assert(false && "Bad value type");
     }
 }
 
@@ -102,11 +115,11 @@ JsonValue& JsonValue::operator[] (std::string_view key)
 {
     assert(type_ == JSON_OBJECT);
 
-    if (obj_.find(key) != obj_.end()) {
-        return obj_[key];
-    }
+    auto it = findMember(key);
+    if (it != obj_->data.end())
+        return it->value;
 
-    assert(false); // unlike std::map
+    assert(false);
     static JsonValue fake(JSON_NULL);
     return fake;
 }
@@ -114,9 +127,9 @@ JsonValue& JsonValue::operator[] (std::string_view key)
 size_t JsonValue::getSize() const
 {
     if (type_ == JSON_ARRAY)
-        return arr_.size();
+        return arr_->data.size();
     else if (type_ == JSON_OBJECT)
-        return obj_.size();
+        return obj_->data.size();
     return 1;
 }
 
@@ -126,11 +139,25 @@ const JsonValue&  JsonValue::operator[] (std::string_view key) const
 }
 
 
+JsonValue::MemberIterator JsonValue::findMember(std::string_view key)
+{
+    assert(type_ == JSON_OBJECT);
+    return std::find_if(obj_->data.begin(), obj_->data.end(), [key](const Member& m)->bool {
+        return m.key.getStringView() == key;
+    });
+}
+
+JsonValue::ConstMemberIterator JsonValue::findMember(std::string_view key) const
+{
+    return const_cast<JsonValue&>(*this).findMember(key);
+}
+
+
 JsonValue& JsonValue::addMember(JsonValue&& key, JsonValue&& value)
 {
     assert(type_ == JSON_OBJECT);
     assert(key.type_ == JSON_STRING);
-    assert(obj_.find(key.str_) == obj_.end());
-    obj_[key.str_] = std::move(value);
-    return obj_[key.str_];
+    assert(findMember(key.getStringView()) == memberEnd());
+    obj_->data.emplace_back(std::move(key), std::move(value));
+    return obj_->data.back().value;
 }

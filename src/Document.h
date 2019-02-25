@@ -111,7 +111,7 @@ private:
             type_ = value.type_;
             arr_ = value.arr_;
             value.type_ = JSON_NULL;
-            value.arr_.clear(); // fixme
+            value.arr_ = nullptr; // fixme
             return this;
         }
 
@@ -154,10 +154,10 @@ private:
         JsonValue* lastValue()
         {
             if (type() == JSON_ARRAY) {
-                return &value->arr_.back();
+                return &value->arr_->data.back();
             } else {
-//                return &value->obj_->data.back().value;
-                return  nullptr;  // fixme
+                return &value->obj_->data.back().value;
+//                return  nullptr;  // fixme
             }
         }
 

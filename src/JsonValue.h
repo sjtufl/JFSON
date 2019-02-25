@@ -33,10 +33,15 @@ enum ValueType {
 };
 
 class Document;
+struct Member;
 
 class JsonValue
 {
     friend class Document;
+
+public:
+    typedef std::vector<Member>::iterator MemberIterator;
+    typedef std::vector<Member>::const_iterator ConstMemberIterator;
 
 public:
     explicit JsonValue(ValueType type = JSON_NULL);
@@ -63,12 +68,12 @@ public:
 
     explicit JsonValue(std::string_view s):
             type_(JSON_STRING),
-            str_(s)
+            str_(new StringWithRefCount(s.begin(), s.end()))
     {}
 
     explicit JsonValue(const char* s):
             type_(JSON_STRING),
-            str_(std::string_view(s, strlen(s)))
+            str_(new StringWithRefCount(s, s+strlen(s)))
     {}
 
     JsonValue(const JsonValue& rhs);
@@ -112,25 +117,25 @@ public:
         assert(type_ == JSON_DOUBLE);
         return doub_;
     }
-//    std::string_view getStringView() const
-//    {
-//        assert(type_ == JSON_STRING);
-//        return std::string_view()
-//    }
+    std::string_view getStringView() const
+    {
+        assert(type_ == JSON_STRING);
+        return std::string_view(&*str_->data.begin(), str_->data.size());
+    }
     std::string getString() const
     {
         assert(type_ == JSON_STRING);
-        return str_;
+        return std::string(getStringView());
     }
     const auto& getArray() const
     {
         assert(type_ == JSON_ARRAY);
-        return arr_;
+        return arr_->data;
     }
     const auto& getObject() const
     {
         assert(type_ == JSON_OBJECT);
-        return obj_;
+        return obj_->data;
     }
     // SET OPERATION
     JsonValue& setNull()
@@ -184,34 +189,60 @@ public:
     JsonValue& operator[] (std::string_view key);
     const JsonValue& operator[] (std::string_view key) const;
 
-    template <typename T>
-    JsonValue& addValue(T&& value)
+    MemberIterator memberBegin()
     {
-        assert(type_ == JSON_ARRAY);
-        arr_.emplace_back(std::forward<T>(value));
-        return arr_.back();
+        assert(type_ == JSON_OBJECT);
+        return obj_->data.begin();
     }
 
-    const JsonValue& operator[] (size_t i) const
+    ConstMemberIterator memberBegin() const
     {
-        assert(type_ == JSON_ARRAY);
-        return arr_[i];
+        return const_cast<JsonValue&>(*this).memberBegin();
     }
 
-    JsonValue& operator[] (size_t i)
+    MemberIterator memberEnd()
     {
-        assert(type_ == JSON_ARRAY);
-        return arr_[i];
+        assert(type_ == JSON_OBJECT);
+        return obj_->data.end();
     }
+
+    ConstMemberIterator memberEnd() const
+    {
+        return const_cast<JsonValue&>(*this).memberEnd();
+    }
+
+    MemberIterator findMember(std::string_view key);
+
+    ConstMemberIterator findMember(std::string_view key) const;
 
     template <typename V>
     JsonValue& addMember(const char* key, V&& value)
     {
         return addMember(JsonValue(key),
-                         Value(std::forward<V>(value)));
+                         JsonValue(std::forward<V>(value)));
     };
 
     JsonValue& addMember(JsonValue&& key, JsonValue&& value);
+
+    template <typename T>
+    JsonValue& addValue(T&& value)
+    {
+        assert(type_ == JSON_ARRAY);
+        arr_->data.emplace_back(std::forward<T>(value));
+        return arr_->data.back();
+    }
+
+    const JsonValue& operator[] (size_t i) const
+    {
+        assert(type_ == JSON_ARRAY);
+        return arr_->data[i];
+    }
+
+    JsonValue& operator[] (size_t i)
+    {
+        assert(type_ == JSON_ARRAY);
+        return arr_->data[i];
+    }
 
     template <typename Handler>
     bool writeTo(Handler& handler) const;
@@ -219,21 +250,66 @@ public:
 private:
     ValueType type_;
 
+    template <typename T>
+    struct RefCount
+    {
+        template <typename... Args>
+        RefCount(Args&&... args)
+        : refCount(1)
+        , data(std::forward<Args>(args)...)
+        {}
+        ~RefCount()
+        { assert(refCount == 0); }
+
+        int incrAndGet()
+        {
+            assert(refCount > 0);
+            return ++refCount;
+        }
+
+        int decrAndGet()
+        {
+            assert(refCount > 0);
+            return --refCount;
+        }
+
+        std::atomic_int refCount;
+        T data;
+    };
+
 //    typedef std::vector<char> String;
-    typedef std::vector<JsonValue> Array;
+    typedef RefCount<std::vector<JsonValue>> ArrayWithRefCount;
     // Fixme: Replace map with struct Member
-    typedef std::map<std::string_view, JsonValue> Object;
+//    typedef std::map<std::string_view, JsonValue> Object;
+    typedef RefCount<std::vector<Member>> ObjectWithRefCount;
+    typedef RefCount<std::vector<char>> StringWithRefCount;
 
     union {
         bool bo_;
         int32_t int32_;
         int64_t int64_;
         double doub_;
-        std::string str_;
-        Array arr_;
-        Object obj_;
+        StringWithRefCount* str_;
+        ArrayWithRefCount* arr_;
+        ObjectWithRefCount* obj_;
     };
 
+};
+
+struct Member
+{
+    Member(JsonValue&& key_, JsonValue&& value_):
+            key(std::move(key_)),
+            value(std::move(value_))
+    {}
+
+    Member(std::string_view key_, JsonValue&& value_):
+            key(key_),
+            value(std::move(value_))
+    {}
+
+    JsonValue key;
+    JsonValue value;
 };
 
 #define CALL(expr) do { if (!(expr)) return false; } while(false)
@@ -259,7 +335,7 @@ inline bool JsonValue::writeTo(Handler& handler) const
             CALL(handler.Double(doub_));
             break;
         case JSON_STRING:
-            CALL(handler.String(str_));
+            CALL(handler.String(getStringView()));
             break;
         case JSON_ARRAY:
             CALL(handler.StartArray());
@@ -270,18 +346,18 @@ inline bool JsonValue::writeTo(Handler& handler) const
             break;
         case JSON_OBJECT:
             // fixme : use struct member
-            CALL(handler.StartObject());
-            for(auto& member : getObject()) {
-                handler.Key(member.first);
-                CALL(member.second.writeTo(handler));
-            }
-            CALL(handler.EndObject());
 //            CALL(handler.StartObject());
-//            for (auto& member: getObject()) {
-//                handler.Key(member.key.getStringView());
-//                CALL(member.value.writeTo(handler));
+//            for(auto& member : getObject()) {
+//                handler.Key(member.first);
+//                CALL(member.second.writeTo(handler));
 //            }
 //            CALL(handler.EndObject());
+            CALL(handler.StartObject());
+            for (auto& member: getObject()) {
+                handler.Key(member.key.getStringView());
+                CALL(member.value.writeTo(handler));
+            }
+            CALL(handler.EndObject());
             break;
         default:
             assert(false && "bad type");
