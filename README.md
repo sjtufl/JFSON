@@ -22,7 +22,7 @@ Inspired by [RapidJSON](https://github.com/Tencent/rapidjson), JFSON defines sev
 
 * `Handler`
 
-  `Handler` is critical for implementing SAX API. In nature, it's a events handler when parsing JSON stream. Class `Document` and Class `Writer` are implemented `Handler` in JFSON. However, users can build their own `Handler` according to their needs.
+  `Handler` is critical for implementing SAX API. In nature, it's an events handler when parsing JSON stream. Class `Document` and Class `Writer` are implemented `Handler` in JFSON. However, users can build their own `Handler` according to their needs.
 
 #### Parsing and Generating
 
@@ -129,5 +129,5 @@ Process finished with exit code 0
 
 ### References
 
-* [JSON tutorial](https://github.com/miloyip/json-tutorial ) 从零开始的JSON库教程
+* [JSON tutorial](https://github.com/miloyip/json-tutorial) 从零开始的JSON库教程
 
