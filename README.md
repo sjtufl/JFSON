@@ -2,9 +2,9 @@
 
 JFSON is a light-weight JSON parser and generator, which support DOM (Document Object Model) as well as SAX (Simple API for XML) style API.
 
-#### Design
+### Design
 
-##### Core Concepts
+#### Core Concepts
 
 Inspired by [RapidJSON](https://github.com/Tencent/rapidjson), JFSON defines several core concepts as follows:
 
@@ -24,7 +24,7 @@ Inspired by [RapidJSON](https://github.com/Tencent/rapidjson), JFSON defines sev
 
   `Handler` is critical for implementing SAX API. In nature, it's a events handler when parsing JSON stream. Class `Document` and Class `Writer` are implemented `Handler` in JFSON. However, users can build their own `Handler` according to their needs.
 
-##### Parsing and Generating
+#### Parsing and Generating
 
 * JFSON adopts recursive parser by default
   * Recursive parser if faster than iterative parser
@@ -32,7 +32,7 @@ Inspired by [RapidJSON](https://github.com/Tencent/rapidjson), JFSON defines sev
 * Support JSON string generation
 * Reasonable memory overheads
 
-##### Miscellaneous
+#### Miscellaneous
 
 * Make use of some new features of modern C++. 
   * std::string_view
@@ -40,9 +40,9 @@ Inspired by [RapidJSON](https://github.com/Tencent/rapidjson), JFSON defines sev
   * template
   * range-based loop
 
-#### Usage
+### Usage
 
-##### Parsing JSON
+#### Parsing JSON
 
 For small sized JSON string or file, we could use DOM style API. Modifying the variable in a parsed JSON object can also be done via DOM API.
 
@@ -94,7 +94,7 @@ test: addMember: Mountain View City
 Process finished with exit code 0
 ```
 
-##### Generating JSON
+#### Generating JSON
 
 We could leverage `Writer` to generate JSON string like this:
 
@@ -127,8 +127,7 @@ The corresponding output:
 Process finished with exit code 0
 ```
 
-#### References
+### References
 
-[RapidJSON]: https://github.com/Tencent/rapidjson	"A fast JSON parser/generator for C++ with both SAX/DOM style API"
-[JSON tutorial]: https://github.com/miloyip/json-tutorial	"从零开始的 JSON 库教程"
+* [JSON tutorial](https://github.com/miloyip/json-tutorial ) 从零开始的JSON库教程
 
