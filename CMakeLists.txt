@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.8)
 project(JFSON)
 
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release")
+endif()
+
 enable_testing()
 
 set(CXX_FLAGS

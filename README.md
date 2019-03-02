@@ -27,7 +27,6 @@ Inspired by [RapidJSON](https://github.com/Tencent/rapidjson), JFSON defines sev
 ### Parsing and Generating
 
 * JFSON adopts recursive parser by default
-  * Recursive parser if faster than iterative parser
 * Support comprehensive error tips if parsing failed
 * Support JSON string generation
 * Reasonable memory overheads
@@ -50,7 +49,7 @@ For small sized JSON string or file, we could use DOM style API. Modifying the v
 int main()
 {
     Document doc;
-    ParseError err = docagain.parse(R"(
+    ParseError err = doc.parse(R"(
                 {
                     "precision": "zip",
                     "Latitude": 37.766800000000003,
@@ -68,17 +67,17 @@ int main()
         puts(parseErrorStr(err));
         exit(1);
     }
-    JsonValue& state = docagain["State"];
+    JsonValue& state = doc["State"];
     std::cout << "State: " << state.getStringView() << '\n';
 
-    JsonValue& zip = docagain["Zip"];
+    JsonValue& zip = doc["Zip"];
     std::cout << "Zip: " << zip.getStringView() << "\n";
 
     zip.setInt32(9527);
     std::cout << "Zip: " << zip.getInt32() << "\n";
 
-    docagain.addMember("123", "456");
-    JsonValue& test = docagain["Address"];
+    doc.addMember("123", "456");
+    JsonValue& test = doc["Address"];
     std::cout << "test: addMember: " << test.getStringView() << std::endl;
 }
 ```

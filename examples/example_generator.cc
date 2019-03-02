@@ -6,6 +6,7 @@
 
 #include <src/JsonWriter.h>
 #include <src/FileWriteStream.h>
+//#include <src/PrettyWriter.h>
 
 using namespace jfson;
 
